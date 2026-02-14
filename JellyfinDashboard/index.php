@@ -10,11 +10,13 @@ try {
     echo('Error parsing last_updated date: ' . $e->getMessage());
 }
 
-$users_by_points = uasort($users, function ($a, $b) {
+$users_by_points = $users;
+uasort($users_by_points, function ($a, $b) {
     return $b['points'] <=> $a['points'];
 });
 
-$users_by_playcount = uasort($users, function ($a, $b) {
+$users_by_playcount = $users;
+uasort($users_by_playcount, function ($a, $b) {
     return $b['daily_stats']['items_completed'] <=> $a['daily_stats']['items_completed'];
 });
 ?>
@@ -39,7 +41,7 @@ $users_by_playcount = uasort($users, function ($a, $b) {
                 <th>Play Count</th>
                 <th>Played minutes</th>
             </tr>
-            <?php foreach ($users as $user): ?>
+            <?php foreach ($users_by_playcount as $user): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['daily_stats']['items_completed']); ?></td>
@@ -55,7 +57,7 @@ $users_by_playcount = uasort($users, function ($a, $b) {
                 <th>Username</th>
                 <th>Total Points</th>
             </tr>
-            <?php foreach ($users as $user): ?>
+            <?php foreach ($users_by_points as $user): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['points']); ?></td>
