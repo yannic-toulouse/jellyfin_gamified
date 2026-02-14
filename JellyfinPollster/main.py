@@ -130,6 +130,8 @@ def create_json():
         'users': {}
     }
     for user in users:
+        if get_points(user['id']) == 0:
+            continue
         user_id = user['id']
         daily_stats = cur.execute('SELECT * FROM daily_stats WHERE user_id = ? AND date(date) >= date("now", "start of day")', (user_id,)).fetchone()
         points_ledger = cur.execute('SELECT SUM(reason = "Watched a movie") as movies_completed, SUM(reason = "Watched an episode") as episodes_completed FROM points_ledger WHERE user_id = ?', (user_id,)).fetchone()
