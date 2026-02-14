@@ -45,13 +45,15 @@ def get_plays_api(userid):
 def insert_plays(userid, plays):
     cur = con.cursor()
     last_processed = cur.execute('SELECT last_processed_played_date FROM users WHERE id = ?', (userid,)).fetchone()[0]
+    if last_processed is None:
+        last_processed = datetime.fromtimestamp(0, tz=timezone.utc)
     max_last_played = datetime.fromtimestamp(0, tz=timezone.utc)
 
     if last_processed:
         last_processed = utils.parse_jellyfin_date(last_processed.replace('Z', '+00:00'))
         max_last_played = last_processed
     else:
-        last_processed = datetime.fromtimestamp(0, tz=timezone.utc)
+        last_processed = datetime.fromtimestamp(0, tz=timezone.utc).isoformat()
 
     for item in plays['Items']:
         last_played = utils.parse_jellyfin_date(item.get('UserData', {}).get('LastPlayedDate', '1970-01-01T00:00:00Z').replace('Z', '+00:00'))
@@ -76,6 +78,8 @@ def insert_item(item):
 def insert_points(userid):
     cur = con.cursor()
     last_processed = cur.execute('SELECT last_processed_played_date FROM users WHERE id = ?', (userid,)).fetchone()[0]
+    if last_processed is None:
+        last_processed = datetime.fromtimestamp(0, tz=timezone.utc).isoformat()
     cur.execute('SELECT id, user_id, item_id, date_played FROM plays WHERE user_id = ? AND date(date_played) > date(?)', (userid, last_processed))
     plays = cur.fetchall()
     for play in plays:
