@@ -116,10 +116,10 @@ def insert_daily_stats(users):
     for user in users:
         playtime = 0
         user_id = user['Id']
-        response = cur.execute('SELECT SUM(items.runtime_ticks) as total_runtime, COUNT(plays.item_id) as item_count FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? AND date(date_played) >= date("now", "start of day") AND date(date_played) < date("now", "+1 day", "start of day")', (user_id,)).fetchall()
-        items_completed = response[0]['item_count'] or 0
-        playtime += (response[0]['total_runtime'] or 0) / 10000000 / 60
-        cur.execute('INSERT OR IGNORE INTO daily_stats (user_id, date, watch_minutes, items_completed) VALUES (?, date("now", "start of day"), ?, ?)', (user_id, playtime, items_completed))
+        response = cur.execute('SELECT SUM(items.runtime_ticks) as total_runtime, COUNT(plays.item_id) as item_count FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? AND date(date_played) >= date("now", "start of day") AND date(date_played) < date("now", "+1 day", "start of day")', (user_id,)).fetchone()
+        items_completed = response['item_count'] or 0
+        playtime += (response['total_runtime'] or 0) / 10000000 / 60
+        cur.execute('INSERT INTO daily_stats (user_id, date, watch_minutes, items_completed) VALUES (?, date("now", "start of day"), ?, ?) ON CONFLICT(user_id, date) DO UPDATE SET watch_minutes = excluded.watch_minutes, items_completed = excluded.items_completed', (user_id, playtime, items_completed))
     con.commit()
 
 def create_json():
