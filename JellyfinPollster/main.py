@@ -127,6 +127,7 @@ def create_json():
     users = get_users()
     users_dict = {
         'last_updated': datetime.now().isoformat(),
+        'users': {}
     }
     for user in users:
         user_id = user['id']
@@ -134,7 +135,7 @@ def create_json():
         points_ledger = cur.execute('SELECT SUM(reason = "Watched a movie") as movies_completed, SUM(reason = "Watched an episode") as episodes_completed FROM points_ledger WHERE user_id = ?', (user_id,)).fetchone()
         monthly_totals = cur.execute('SELECT * FROM monthly_totals WHERE user_id = ?', (user_id,)).fetchall()
 
-        users_dict[user_id] = {
+        users_dict['users'][user_id] = {
             'name': user['Name'],
             'points' : get_points(user_id),
             'daily_stats': {
@@ -153,10 +154,10 @@ def create_json():
             year = total['year']
             month = total['month']
 
-            if year not in users_dict[user_id]['monthly_totals']:
-                users_dict[user_id]['monthly_totals'][year] = {}
+            if year not in users_dict['users'][user_id]['monthly_totals']:
+                users_dict['users'][user_id]['monthly_totals'][year] = {}
 
-            users_dict[user_id]['monthly_totals'][year][month] = {
+            users_dict['users'][user_id]['monthly_totals'][year][month] = {
                 'points': total['points']
             }
     json.dump(users_dict, open('../data/users.json', 'w'), indent=2)
