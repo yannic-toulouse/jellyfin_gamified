@@ -125,12 +125,15 @@ def insert_daily_stats(users):
 def create_json():
     cur = con.cursor()
     users = get_users()
-    users_dict = {}
+    users_dict = {
+        'last_updated': datetime.now().isoformat(),
+    }
     for user in users:
         user_id = user['id']
         daily_stats = cur.execute('SELECT * FROM daily_stats WHERE user_id = ? AND date(date) >= date("now", "start of day")', (user_id,)).fetchone()
         points_ledger = cur.execute('SELECT SUM(reason = "Watched a movie") as movies_completed, SUM(reason = "Watched an episode") as episodes_completed FROM points_ledger WHERE user_id = ?', (user_id,)).fetchone()
         monthly_totals = cur.execute('SELECT * FROM monthly_totals WHERE user_id = ?', (user_id,)).fetchall()
+
         users_dict[user_id] = {
             'name': user['Name'],
             'points' : get_points(user_id),
