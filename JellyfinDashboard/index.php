@@ -1,6 +1,13 @@
 <?php
 $user_data = file_get_contents('../data/users.json');
 $users = json_decode($user_data, true);
+    $last_updated = null;
+try {
+    $last_updated = new DateTime($users['last_updated']);
+    $last_updated = $last_updated->format('Y-m-d H:i');
+} catch (Exception $e) {
+    echo('Error parsing last_updated date: ' . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,6 +19,7 @@ $users = json_decode($user_data, true);
 </head>
 <body>
     <h1>Jellyfin Leaderboard</h1>
+    <h2 class="last_updated">Last Updated: <?php echo $last_updated ? $last_updated : 'Undefined'; ?></h2>
     <div class="tables-container">
         <table>
             <tr>
@@ -22,7 +30,7 @@ $users = json_decode($user_data, true);
                 <th>Play Count</th>
                 <th>Played minutes</th>
             </tr>
-            <?php foreach ($users as $user): ?>
+            <?php foreach ($users['users'] as $user): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['daily_stats']['items_completed']); ?></td>
@@ -38,7 +46,7 @@ $users = json_decode($user_data, true);
                 <th>Username</th>
                 <th>Total Points</th>
             </tr>
-            <?php foreach ($users as $user): ?>
+            <?php foreach ($users['users'] as $user): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['points']); ?></td>
