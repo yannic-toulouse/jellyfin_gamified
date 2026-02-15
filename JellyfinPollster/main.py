@@ -46,8 +46,8 @@ def insert_plays(userid, plays):
     cur = con.cursor()
     last_processed = cur.execute('SELECT last_processed_played_date FROM users WHERE id = ?', (userid,)).fetchone()[0]
     if last_processed is None:
-        last_processed = datetime.fromtimestamp(0, tz=timezone.utc)
-    max_last_played = datetime.fromtimestamp(0, tz=timezone.utc)
+        last_processed = datetime.fromtimestamp(0, tz=timezone.utc).isoformat()
+    max_last_played = datetime.fromtimestamp(0, tz=timezone.utc).isoformat()
 
     if last_processed:
         max_last_played = last_processed
