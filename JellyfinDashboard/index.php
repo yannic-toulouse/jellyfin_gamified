@@ -30,22 +30,24 @@ uasort($users_by_playcount, function ($a, $b) {
 </head>
 <body>
     <h1>Jellyfin Leaderboard</h1>
-    <h2 class="last_updated">Last Updated: <?php echo $last_updated ? $last_updated : 'Undefined'; ?></h2>
+    <h2 class="last_updated">Last Updated: <?php echo $last_updated ?: 'Undefined'; ?></h2>
     <div class="tables-container">
         <table>
             <tr>
-                <th colspan="3">Daily Play Count</th>
+                <th colspan="4">Daily Play Count</th>
             </tr>
             <tr>
                 <th>Username</th>
                 <th>Play Count</th>
                 <th>Played minutes</th>
+                <th>Streak</th>
             </tr>
             <?php foreach ($users_by_playcount as $user): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['daily_stats']['items_completed']); ?></td>
-                    <td><?php echo htmlspecialchars(round($user['daily_stats']['watch_minutes'], 0)); ?></td>
+                    <td><?php echo htmlspecialchars(round($user['daily_stats']['watch_minutes'])); ?></td>
+                    <td><?php echo $user['streak'] > 1 || $user['streak'] == 0 ? htmlspecialchars($user['streak']) . ' days' : htmlspecialchars($user['streak']) . ' day'; ?></td>
                 </tr>
             <?php endforeach; ?>
         </table>

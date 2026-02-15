@@ -125,11 +125,22 @@ def insert_daily_stats(users):
         cur.execute('INSERT INTO daily_stats (user_id, date, watch_minutes, items_completed) VALUES (?, date("now", "start of day"), ?, ?) ON CONFLICT(user_id, date) DO UPDATE SET watch_minutes = excluded.watch_minutes, items_completed = excluded.items_completed', (user_id, playtime, items_completed))
     con.commit()
 
+def get_streak(user_id):
+    cur = con.cursor()
+    daily_stats = cur.execute('SELECT items_completed FROM daily_stats WHERE user_id = ? ORDER BY date DESC', (user_id,)).fetchall()
+    streak = 0
+    for item in daily_stats:
+        if item['items_completed'] > 0:
+            streak += 1
+        else:
+            break
+    return streak
+
 def create_json():
     cur = con.cursor()
     users = get_users()
     users_dict = {
-        'last_updated': datetime.now().isoformat(),
+        'last_updated': datetime.now(tz=timezone.utc).isoformat(),
         'users': {}
     }
     for user in users:
@@ -139,10 +150,12 @@ def create_json():
         daily_stats = cur.execute('SELECT * FROM daily_stats WHERE user_id = ? AND date(date) >= date("now", "start of day")', (user_id,)).fetchone()
         points_ledger = cur.execute('SELECT SUM(reason = "Watched a movie") as movies_completed, SUM(reason = "Watched an episode") as episodes_completed FROM points_ledger WHERE user_id = ?', (user_id,)).fetchone()
         monthly_totals = cur.execute('SELECT * FROM monthly_totals WHERE user_id = ?', (user_id,)).fetchall()
+        streak = get_streak(user_id)
 
         users_dict['users'][user_id] = {
             'name': user['Name'],
             'points' : get_points(user_id),
+            'streak': streak,
             'daily_stats': {
                 'date' : daily_stats['date'],
                 'watch_minutes' : daily_stats['watch_minutes'],
