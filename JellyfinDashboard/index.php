@@ -39,10 +39,10 @@ uasort($users_by_playcount, function ($a, $b) {
             <tr>
                 <th>Username</th>
                 <th>Play Count</th>
-                <th>Played minutes</th>
+                <th>Watched Minutes</th>
                 <th>Streak</th>
             </tr>
-            <?php foreach ($users_by_playcount as $user): ?>
+            <?php foreach ($users_by_playcount as $user):?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['daily_stats']['items_completed']); ?></td>
@@ -53,18 +53,40 @@ uasort($users_by_playcount, function ($a, $b) {
         </table>
         <table>
             <tr>
-                <th colspan="2">Total Points</th>
+                <th colspan="3">Totals</th>
             </tr>
             <tr>
                 <th>Username</th>
                 <th>Total Points</th>
+                <th>Total Watched Minutes</th>
             </tr>
             <?php foreach ($users_by_points as $user): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['points']); ?></td>
+                    <td><?php echo htmlspecialchars(round($user['total_watchtime'])); ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+        <table>
+            <tr>
+                <th colspan="3">Latest Activity</th>
+            </tr>
+            <tr>
+                <th>Username</th>
+                <th>Last Activity</th>
+                <th>Last Active On</th>
+            </tr>
+            <?php foreach ($users as $user):
+                $last_activity = new DateTime($user['last_activity']);
+                $last_activity = $last_activity->format('Y-m-d'); ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($user['name']); ?></td>
+                    <td><?php echo htmlspecialchars($user['last_watched']); ?></td>
+                    <td><span style="white-space:nowrap;"><?php echo htmlspecialchars($last_activity); ?></span></td>
                 </tr>
             <?php endforeach; ?>
         </table>
     </div>
 </body>
+</html>

@@ -1,7 +1,6 @@
 import datetime
 import json
 import sqlite3
-import utils
 import requests
 import os
 from dotenv import load_dotenv
@@ -55,7 +54,7 @@ def insert_plays(userid, plays):
         last_processed = datetime.fromtimestamp(0, tz=timezone.utc).isoformat()
 
     for item in plays['Items']:
-        last_played = utils.parse_jellyfin_date(item.get('UserData', {}).get('LastPlayedDate', '1970-01-01T00:00:00Z').replace('Z', '+00:00')).isoformat()
+        last_played = datetime.fromisoformat(item.get('UserData', {}).get('LastPlayedDate', '1970-01-01T00:00:00Z').replace('Z', '+00:00')).isoformat()
         if last_played <= last_processed:
             break
 
@@ -150,12 +149,18 @@ def create_json():
         daily_stats = cur.execute('SELECT * FROM daily_stats WHERE user_id = ? AND date(date) >= date("now", "start of day")', (user_id,)).fetchone()
         points_ledger = cur.execute('SELECT SUM(reason = "Watched a movie") as movies_completed, SUM(reason = "Watched an episode") as episodes_completed FROM points_ledger WHERE user_id = ?', (user_id,)).fetchone()
         monthly_totals = cur.execute('SELECT * FROM monthly_totals WHERE user_id = ?', (user_id,)).fetchall()
+        runtime_ticks_response = cur.execute('SELECT SUM(items.runtime_ticks) as total_runtime_ticks FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ?', (user_id,)).fetchone()
+        total_watchtime = runtime_ticks_response['total_runtime_ticks'] / 10000000 / 60
+        last_activity = cur.execute('SELECT items.name as item_name, plays.date_played as date FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? ORDER BY date_played DESC', (user_id,)).fetchone()
         streak = get_streak(user_id)
 
         users_dict['users'][user_id] = {
             'name': user['Name'],
+            'last_activity': last_activity['date'],
+            'total_watchtime': total_watchtime,
             'points' : get_points(user_id),
             'streak': streak,
+            'last_watched' : last_activity['item_name'],
             'daily_stats': {
                 'date' : daily_stats['date'],
                 'watch_minutes' : daily_stats['watch_minutes'],
