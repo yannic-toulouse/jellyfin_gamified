@@ -50,20 +50,19 @@ def insert_plays(userid, plays):
     max_last_played = datetime.fromtimestamp(0, tz=timezone.utc)
 
     if last_processed:
-        last_processed = utils.parse_jellyfin_date(last_processed.replace('Z', '+00:00'))
         max_last_played = last_processed
     else:
         last_processed = datetime.fromtimestamp(0, tz=timezone.utc).isoformat()
 
     for item in plays['Items']:
-        last_played = utils.parse_jellyfin_date(item.get('UserData', {}).get('LastPlayedDate', '1970-01-01T00:00:00Z').replace('Z', '+00:00'))
+        last_played = utils.parse_jellyfin_date(item.get('UserData', {}).get('LastPlayedDate', '1970-01-01T00:00:00Z').replace('Z', '+00:00')).isoformat()
         if last_played <= last_processed:
             break
 
         is_played = item.get('UserData', {}).get('Played', None)
         completion_ratio = item['UserData']['PlaybackPositionTicks'] / item['RunTimeTicks']
         if is_played and last_played > last_processed:
-            cur.execute('INSERT OR IGNORE INTO plays (user_id, item_id, date_played, completion_ratio) VALUES (?, ?, ?, ?)', (userid, item['Id'], last_played.isoformat(), completion_ratio))
+            cur.execute('INSERT OR IGNORE INTO plays (user_id, item_id, date_played, completion_ratio) VALUES (?, ?, ?, ?)', (userid, item['Id'], last_played, completion_ratio))
             insert_item(item)
             if last_played > max_last_played:
                 max_last_played = last_played
@@ -94,7 +93,7 @@ def insert_points(userid):
 
 def update_last_processed(userid, last_processed):
     cur = con.cursor()
-    cur.execute('UPDATE users SET last_processed_played_date = ? WHERE id = ?', (last_processed.isoformat(), userid))
+    cur.execute('UPDATE users SET last_processed_played_date = ? WHERE id = ?', (last_processed, userid))
     con.commit()
 
 def get_points(userid):
