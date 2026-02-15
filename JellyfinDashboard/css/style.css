@@ -1,26 +1,122 @@
-body {
-    font-family: Arial, sans-serif;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+body {
+    font-family: "Georgia", "Segoe UI", serif;
+    background: linear-gradient(180deg, #1b1f2a 0%, #141821 100%);
+    color: #f5f3ef;
+    padding: 60px 20px;
+}
+
+/* page title */
 h1 {
     text-align: center;
-    margin-bottom: 0;
-}
-
-table, tr, th, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-    padding: 5px;
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    color: #f8d57e; /* soft gold */
 }
 
 .last_updated {
     text-align: center;
-    margin-top: 0;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    margin-bottom: 55px;
+    opacity: 0.8;
 }
 
+/* container */
 .tables-container {
     display: flex;
-    justify-content: flex-start;
-    gap: 3%;
-    margin-top: 20px;
+    justify-content: center;
+    gap: 50px;
+    flex-wrap: wrap;
+}
+
+/* table card*/
+table {
+    border-collapse: collapse;
+    width: 400px;
+    background: #222836;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 215, 126, 0.15);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+table:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+}
+
+/* header */
+th {
+    padding: 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+th[colspan] {
+    background: linear-gradient(90deg, #6b1e2d, #8b2436);
+    color: #f8d57e;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+tr:nth-child(2) th {
+    background: rgba(255, 255, 255, 0.05);
+    color: #d1d5db;
+    font-weight: 500;
+}
+
+/* rows */
+td {
+    padding: 15px;
+    text-align: center;
+    font-size: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* alternate rows */
+tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+tr:hover td {
+    background: rgba(248, 213, 126, 0.08);
+    transition: background 0.2s ease;
+}
+
+/* leader highlight */
+table:nth-of-type(2) tr:nth-child(3) td {
+    font-weight: 700;
+    background: rgba(248, 213, 126, 0.15) !important;
+    color: #f8d57e;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+    body {
+        padding: 35px 15px;
+    }
+
+    h1 {
+        font-size: 2.1rem;
+    }
+
+    table {
+        width: 100%;
+        max-width: 500px;
+    }
 }
