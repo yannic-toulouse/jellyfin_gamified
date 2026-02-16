@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/JellyfinDashboard.iml" filepath="$PROJECT_DIR$/.idea/JellyfinDashboard.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../JellyfinPollster/.idea/JellyfinPollster.iml" filepath="$PROJECT_DIR$/../JellyfinPollster/.idea/JellyfinPollster.iml" />
     </modules>
   </component>
 </project>

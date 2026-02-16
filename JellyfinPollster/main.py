@@ -126,11 +126,13 @@ def insert_daily_stats(users):
 
 def get_streak(user_id):
     cur = con.cursor()
-    daily_stats = cur.execute('SELECT items_completed FROM daily_stats WHERE user_id = ? ORDER BY date DESC', (user_id,)).fetchall()
+    daily_stats = cur.execute('SELECT items_completed, date FROM daily_stats WHERE user_id = ? ORDER BY date DESC', (user_id,)).fetchall()
     streak = 0
     for item in daily_stats:
         if item['items_completed'] > 0:
             streak += 1
+        elif item['date'] >= datetime.now().date().isoformat():
+            continue
         else:
             break
     return streak

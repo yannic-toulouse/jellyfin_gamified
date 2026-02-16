@@ -75,7 +75,7 @@ uasort($users_by_playcount, function ($a, $b) {
             <tr>
                 <th>Username</th>
                 <th>Last Activity</th>
-                <th>Last Active On</th>
+                <th>Last&nbsp;Active On</th>
             </tr>
             <?php foreach ($users as $user):
                 $last_activity = new DateTime($user['last_activity']);
