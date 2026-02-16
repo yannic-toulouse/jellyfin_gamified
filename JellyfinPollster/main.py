@@ -10,6 +10,7 @@ con = sqlite3.connect('stats.sqlite')
 con.row_factory = sqlite3.Row
 load_dotenv()
 API_KEY = os.getenv('API_KEY')
+JELLY_DOMAIN = os.getenv('JELLY_DOMAIN')
 MOVIE_POINTS = 50
 EPISODE_POINTS = 20
 
@@ -17,7 +18,7 @@ def get_users_api():
     params = {
         'api_key' : API_KEY
     }
-    response = requests.get('https://jelly.yannictoulouse.de/Users', params=params)
+    response = requests.get(JELLY_DOMAIN + '/Users', params=params)
     return response.json()
 
 def insert_user(user):
@@ -38,7 +39,7 @@ def get_plays_api(userid):
         'Recursive' : 'true',
         'Limit' : 200
     }
-    response = requests.get('https://jelly.yannictoulouse.de/Users/' + userid + '/Items', params=params)
+    response = requests.get(JELLY_DOMAIN + '/Users/' + userid + '/Items', params=params)
     return response.json()
 
 def insert_plays(userid, plays):
