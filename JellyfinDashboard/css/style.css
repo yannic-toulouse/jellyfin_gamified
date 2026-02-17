@@ -54,6 +54,16 @@ table:hover {
     box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
 }
 
+.weekly-leaderboard-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.weekly-leaderboard {
+    width: 50%;
+}
+
 /* header */
 th {
     padding: 16px;
@@ -99,7 +109,7 @@ tr:hover td {
 }
 
 /* leader highlight */
-table:nth-of-type(2) tr:nth-child(3) td {
+.leader-table tr:nth-child(3) td {
     font-weight: 700;
     background: rgba(248, 213, 126, 0.15) !important;
     color: #f8d57e;

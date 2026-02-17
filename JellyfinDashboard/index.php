@@ -15,6 +15,11 @@ uasort($users_by_points, function ($a, $b) {
     return $b['points'] <=> $a['points'];
 });
 
+$users_by_points_weekly = $users;
+uasort($users_by_points_weekly, function ($a, $b) {
+    return $b['weekly_stats']['points'] <=> $a['weekly_stats']['points'];
+});
+
 $users_by_playcount = $users;
 uasort($users_by_playcount, function ($a, $b) {
     return $b['daily_stats']['items_completed'] <=> $a['daily_stats']['items_completed'];
@@ -32,7 +37,28 @@ uasort($users_by_playcount, function ($a, $b) {
     <h1>Jellyfin Leaderboard</h1>
     <h2 class="last_updated">Last Updated: <?php echo $last_updated ?: 'Undefined'; ?></h2>
     <div class="tables-container">
-        <table>
+        <div class="weekly-leaderboard-container leader-table">
+            <table class="weekly-leaderboard">
+                <tr>
+                    <th colspan="4">Weekly Leaderboard</th>
+                </tr>
+                <tr>
+                    <th>Username</th>
+                    <th>Points</th>
+                    <th>Watched Items</th>
+                    <th>Watched Minutes</th>
+                </tr>
+                <?php foreach ($users_by_points_weekly as $user): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($user['name']); ?></td>
+                    <td><?php echo htmlspecialchars($user['weekly_stats']['points']); ?></td>
+                    <td><?php echo htmlspecialchars($user['weekly_stats']['items_completed']); ?></td>
+                    <td><?php echo htmlspecialchars(round($user['weekly_stats']['watch_minutes'])); ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        </div>
+        <table class="leader-table">
             <tr>
                 <th colspan="4">Daily Play Count</th>
             </tr>
@@ -51,7 +77,7 @@ uasort($users_by_playcount, function ($a, $b) {
                 </tr>
             <?php endforeach; ?>
         </table>
-        <table>
+        <table class="totals-table leader-table">
             <tr>
                 <th colspan="3">Totals</th>
             </tr>
@@ -78,7 +104,12 @@ uasort($users_by_playcount, function ($a, $b) {
                 <th>Last&nbsp;Active On</th>
             </tr>
             <?php foreach ($users as $user):
-                $last_activity = new DateTime($user['last_activity']);
+                $last_activity = null;
+                try {
+                    $last_activity = new DateTime($user['last_activity']);
+                } catch (Exception $e) {
+
+                }
                 $last_activity = $last_activity->format('Y-m-d'); ?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
