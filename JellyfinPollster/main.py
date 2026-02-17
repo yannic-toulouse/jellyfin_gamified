@@ -125,6 +125,20 @@ def insert_daily_stats(users):
         cur.execute('INSERT INTO daily_stats (user_id, date, watch_minutes, items_completed) VALUES (?, date("now", "start of day"), ?, ?) ON CONFLICT(user_id, date) DO UPDATE SET watch_minutes = excluded.watch_minutes, items_completed = excluded.items_completed', (user_id, playtime, items_completed))
     con.commit()
 
+def get_weekly_stats(user_id):
+    cur = con.cursor()
+    current_date = datetime.now(timezone.utc).isoformat()
+    weekly_points = cur.execute('SELECT SUM(points) FROM points_ledger WHERE (reason = "Watched a movie" OR reason = "Watched an episode") AND strftime("%Y-%W", created_at) = strftime("%Y-%W", ?) AND user_id = ?', (current_date, user_id)).fetchone()[0] or 0
+    daily_stats = cur.execute('SELECT SUM(watch_minutes) as watch_minutes, SUM(items_completed) as items_completed FROM daily_stats WHERE strftime("%Y-%W", date) = strftime("%Y-%W", ?) AND user_id = ?', (current_date, user_id)).fetchone() or 0
+
+    weekly_stats = {
+        'points' : weekly_points,
+        'watch_minutes' : daily_stats['watch_minutes'],
+        'items_completed' : daily_stats['items_completed']
+    }
+
+    return weekly_stats
+
 def get_streak(user_id):
     cur = con.cursor()
     daily_stats = cur.execute('SELECT items_completed, date FROM daily_stats WHERE user_id = ? ORDER BY date DESC', (user_id,)).fetchall()
@@ -155,6 +169,7 @@ def create_json():
         runtime_ticks_response = cur.execute('SELECT SUM(items.runtime_ticks) as total_runtime_ticks FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ?', (user_id,)).fetchone()
         total_watchtime = runtime_ticks_response['total_runtime_ticks'] / 10000000 / 60
         last_activity = cur.execute('SELECT items.name as item_name, plays.date_played as date FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? ORDER BY date_played DESC', (user_id,)).fetchone()
+        weekly_stats = get_weekly_stats(user_id)
         streak = get_streak(user_id)
 
         users_dict['users'][user_id] = {
@@ -169,6 +184,7 @@ def create_json():
                 'watch_minutes' : daily_stats['watch_minutes'],
                 'items_completed' : daily_stats['items_completed'],
             },
+            'weekly_stats' : weekly_stats,
             'points_ledger': {
                 'movies_watched' : points_ledger['movies_completed'],
                 'episodes_completed' : points_ledger['episodes_completed'],
