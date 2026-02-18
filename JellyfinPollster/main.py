@@ -123,7 +123,7 @@ def insert_daily_stats(users):
 def get_weekly_stats(user_id):
     cur = con.cursor()
     current_date = datetime.now(timezone.utc).isoformat()
-    weekly_points = cur.execute('SELECT SUM(points) FROM points_ledger WHERE (reason = "Watched a movie" OR reason = "Watched an episode") AND strftime("%Y-%W", created_at) = strftime("%Y-%W", ?) AND user_id = ?', (current_date, user_id)).fetchone()[0] or 0
+    weekly_points = cur.execute('SELECT SUM(points) FROM points_ledger WHERE strftime("%Y-%W", created_at) = strftime("%Y-%W", ?) AND user_id = ?', (current_date, user_id)).fetchone()[0] or 0
     daily_stats = cur.execute('SELECT SUM(watch_minutes) as watch_minutes, SUM(items_completed) as items_completed FROM daily_stats WHERE strftime("%Y-%W", date) = strftime("%Y-%W", ?) AND user_id = ?', (current_date, user_id)).fetchone() or 0
 
     weekly_stats = {
