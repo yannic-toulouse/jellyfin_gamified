@@ -79,16 +79,11 @@ def insert_points(userid):
     last_processed = cur.execute('SELECT last_processed_played_date FROM users WHERE id = ?', (userid,)).fetchone()[0]
     if last_processed is None:
         last_processed = datetime.fromtimestamp(0, tz=timezone.utc).isoformat()
-    cur.execute('SELECT id, user_id, item_id, date_played FROM plays WHERE user_id = ? AND date(date_played) > date(?)', (userid, last_processed))
+    cur.execute('SELECT items.runtime_ticks as "runtime_ticks", plays.id, user_id, item_id, date_played FROM plays JOIN items ON items.id = plays.item_id WHERE user_id = ? AND date(date_played) > date(?)', (userid, last_processed))
     plays = cur.fetchall()
     for play in plays:
-        item_type = cur.execute('SELECT type from items WHERE id = ?', (play['item_id'],)).fetchone()[0]
-        if item_type == 'Movie':
-            points = MOVIE_POINTS
-            cur.execute('INSERT INTO points_ledger (user_id, play_id, reason, points) VALUES (?, ?, ?, ?)', (userid, play['id'], 'Watched a movie', points))
-        elif item_type == 'Episode':
-            points = EPISODE_POINTS
-            cur.execute('INSERT INTO points_ledger (user_id, play_id, reason, points) VALUES (?, ?, ?, ?)', (userid, play['id'], 'Watched an episode', points))
+        points = round(play['runtime_ticks'] / 10000000 / 60 * 0.5, 0)
+        cur.execute('INSERT INTO points_ledger (user_id, play_id, reason, points) VALUES (?, ?, ?, ?)', (userid, play['id'], "Watched an Item", points))
     con.commit()
 
 def update_last_processed(userid, last_processed):
