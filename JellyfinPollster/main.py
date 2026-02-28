@@ -11,8 +11,8 @@ con.row_factory = sqlite3.Row
 load_dotenv()
 API_KEY = os.getenv('API_KEY')
 JELLY_DOMAIN = os.getenv('JELLY_DOMAIN')
-MOVIE_POINTS = 50
-EPISODE_POINTS = 20
+TICKS_PER_SECOND = 10000000
+POINTS_PER_MINUTE = 0.5
 
 def get_users_api():
     params = {
@@ -82,7 +82,7 @@ def insert_points(userid):
     cur.execute('SELECT items.runtime_ticks as "runtime_ticks", plays.id, user_id, item_id, date_played FROM plays JOIN items ON items.id = plays.item_id WHERE user_id = ? AND date(date_played) > date(?)', (userid, last_processed))
     plays = cur.fetchall()
     for play in plays:
-        points = round(play['runtime_ticks'] / 10000000 / 60 * 0.5, 0)
+        points = round(play['runtime_ticks'] / TICKS_PER_SECOND / 60 * POINTS_PER_MINUTE, 0)
         cur.execute('INSERT INTO points_ledger (user_id, play_id, reason, points) VALUES (?, ?, ?, ?)', (userid, play['id'], "Watched an Item", points))
     con.commit()
 
@@ -116,7 +116,7 @@ def insert_daily_stats(users):
         user_id = user['Id']
         response = cur.execute('SELECT SUM(items.runtime_ticks) as total_runtime, COUNT(plays.item_id) as item_count FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? AND date(date_played) >= date("now", "start of day") AND date(date_played) < date("now", "+1 day", "start of day")', (user_id,)).fetchone()
         items_completed = response['item_count'] or 0
-        playtime += (response['total_runtime'] or 0) / 10000000 / 60
+        playtime += (response['total_runtime'] or 0) / TICKS_PER_SECOND / 60
         cur.execute('INSERT INTO daily_stats (user_id, date, watch_minutes, items_completed) VALUES (?, date("now", "start of day"), ?, ?) ON CONFLICT(user_id, date) DO UPDATE SET watch_minutes = excluded.watch_minutes, items_completed = excluded.items_completed', (user_id, playtime, items_completed))
     con.commit()
 
@@ -159,10 +159,10 @@ def create_json():
             continue
         user_id = user['id']
         daily_stats = cur.execute('SELECT * FROM daily_stats WHERE user_id = ? AND date(date) >= date("now", "start of day")', (user_id,)).fetchone()
-        points_ledger = cur.execute('SELECT SUM(reason = "Watched a movie") as movies_completed, SUM(reason = "Watched an episode") as episodes_completed FROM points_ledger WHERE user_id = ?', (user_id,)).fetchone()
+        points_ledger = cur.execute('SELECT COUNT(reason) as items_completed FROM points_ledger WHERE user_id = ?', (user_id,)).fetchone()
         monthly_totals = cur.execute('SELECT * FROM monthly_totals WHERE user_id = ?', (user_id,)).fetchall()
         runtime_ticks_response = cur.execute('SELECT SUM(items.runtime_ticks) as total_runtime_ticks FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ?', (user_id,)).fetchone()
-        total_watchtime = runtime_ticks_response['total_runtime_ticks'] / 10000000 / 60
+        total_watchtime = runtime_ticks_response['total_runtime_ticks'] / TICKS_PER_SECOND / 60
         last_activity = cur.execute('SELECT items.name as item_name, plays.date_played as date FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? ORDER BY date_played DESC', (user_id,)).fetchone()
         weekly_stats = get_weekly_stats(user_id)
         streak = get_streak(user_id)
@@ -181,8 +181,7 @@ def create_json():
             },
             'weekly_stats' : weekly_stats,
             'points_ledger': {
-                'movies_watched' : points_ledger['movies_completed'],
-                'episodes_completed' : points_ledger['episodes_completed'],
+                'items_watched' : points_ledger['items_completed'],
             },
             'monthly_totals': {}
         }
