@@ -1,4 +1,5 @@
 <?php
+require 'utils.php';
 $user_data = file_get_contents('../data/users.json');
 $data = json_decode($user_data, true);
 $users = $data['users'];
@@ -29,11 +30,6 @@ $users_by_activity = $users;
 uasort($users_by_activity, function ($a, $b) {
     return $b['last_activity'] <=> $a['last_activity'];
 });
-
-function getHourMinuteString($minutes): string
-{
-    return floor($minutes / 60) . 'h ' . (int)$minutes % 60 . 'm';
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,9 +54,9 @@ function getHourMinuteString($minutes): string
                     <th>Watched Items</th>
                     <th>Watched Minutes</th>
                 </tr>
-                <?php foreach ($users_by_points_weekly as $user):?>
+                <?php foreach ($users_by_points_weekly as $id => $user):?>
                 <tr>
-                    <td><?php echo htmlspecialchars($user['name']); ?></td>
+                    <td><a href="/user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
                     <td><?php echo htmlspecialchars($user['weekly_stats']['points']); ?></td>
                     <td><?php echo htmlspecialchars($user['weekly_stats']['items_completed']); ?></td>
                     <td><?php echo getHourMinuteString($user['weekly_stats']['watch_minutes']); ?></td>
