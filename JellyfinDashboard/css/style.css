@@ -21,6 +21,11 @@ h1 {
     color: #f8d57e; /* soft gold */
 }
 
+a {
+    text-decoration: none;
+    color: #f5f3ef;
+}
+
 .last_updated {
     text-align: center;
     font-size: 0.85rem;
@@ -112,6 +117,10 @@ tr:hover td {
 .leader-table tr:nth-child(3) td {
     font-weight: 700;
     background: rgba(248, 213, 126, 0.15) !important;
+    color: #f8d57e;
+}
+
+.leader-table tr:nth-child(3) a {
     color: #f8d57e;
 }
 
