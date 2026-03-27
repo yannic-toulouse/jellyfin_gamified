@@ -1,9 +1,15 @@
 <?php
 require 'utils.php';
-$user_data = file_get_contents('../data/users.json');
-$user_data = json_decode($user_data, true);
+$user_data = getData();
 $user_id = $_GET['id'];
 $user = $user_data['users'][$user_id];
+$rank = 0;
+foreach (getUsersByPoints() as $key => $value) {
+    $rank++;
+    if($key == $_GET['id']) {
+        break;
+    }
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -14,16 +20,25 @@ $user = $user_data['users'][$user_id];
     <title><?=htmlspecialchars($user['name'])?></title>
 </head>
 <body>
-    <h1><?=htmlspecialchars($user['name'])?></h1>
+    <a href="./index.php"><h2><- Back</h2></a>
     <div class="tables-container">
-        <table>
-            <tr>
-                <td><?=htmlspecialchars($user['points'])?> points</td>
-            </tr>
-            <tr>
-                <td><?=getHourMinuteString($user['total_watchtime'])?></td>
-            </tr>
-        </table>
+        <div class="weekly-leaderboard-container leader-table">
+            <table class="weekly-leaderboard">
+                <tr>
+                    <th colspan="3"><?=htmlspecialchars($user['name'])?></th>
+                </tr>
+                <tr>
+                    <th>Points</th>
+                    <th>Watched Minutes</th>
+                    <th>Streak</th>
+                </tr>
+                    <tr>
+                        <td><?php echo htmlspecialchars($user['points']); ?></td>
+                        <td><?php echo getHourMinuteString($user['total_watchtime']); ?></td>
+                        <td><?php echo $user['streak']; echo $user['streak'] != 1 ? ' days' : ' day'; ?></td>
+                    </tr>
+            </table>
+        </div>
     </div>
 </body>
 </html>
