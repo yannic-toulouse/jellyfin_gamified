@@ -1,6 +1,7 @@
 <?php
 require 'utils.php';
 $last_updated = null;
+$users_by_points_weekly = getUsersByPointsWeekly();
 try {
     $last_updated = new DateTime(getData()['last_updated']);
     $last_updated = $last_updated->format('Y-m-d H:i');
@@ -24,7 +25,7 @@ try {
     <div class="tables-container">
         <div class="weekly-leaderboard-container leader-table">
             <table class="weekly-leaderboard">
-                <tr>
+                <tr class="header-row">
                     <th colspan="4">Weekly Leaderboard</th>
                 </tr>
                 <tr>
@@ -33,7 +34,7 @@ try {
                     <th>Watched Items</th>
                     <th>Watched Minutes</th>
                 </tr>
-                <?php foreach (getUsersByPointsWeekly() as $id => $user):?>
+                <?php foreach ($users_by_points_weekly as $id => $user):?>
                 <tr>
                     <td><a href="./user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
                     <td><?php echo htmlspecialchars($user['weekly_stats']['points']); ?></td>
@@ -44,7 +45,7 @@ try {
             </table>
         </div>
         <table class="leader-table">
-            <tr>
+            <tr class="header-row">
                 <th colspan="4">Daily Play Count</th>
             </tr>
             <tr>
@@ -63,7 +64,7 @@ try {
             <?php endforeach; ?>
         </table>
         <table class="totals-table leader-table">
-            <tr>
+            <tr class="header-row">
                 <th colspan="3">Totals</th>
             </tr>
             <tr>
@@ -80,7 +81,7 @@ try {
             <?php endforeach; ?>
         </table>
         <table>
-            <tr>
+            <tr class="header-row">
                 <th colspan="3">Latest Activity</th>
             </tr>
             <tr>

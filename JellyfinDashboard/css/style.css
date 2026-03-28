@@ -36,6 +36,7 @@ a {
 
 /* container */
 .tables-container {
+    width: 100%;
     display: flex;
     justify-content: center;
     gap: 50px;
@@ -78,7 +79,7 @@ th {
     text-transform: uppercase;
 }
 
-th[colspan] {
+.header-row {
     background: linear-gradient(90deg, #6b1e2d, #8b2436);
     color: #f8d57e;
     font-size: 1rem;
