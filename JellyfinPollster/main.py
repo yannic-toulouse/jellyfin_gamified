@@ -71,7 +71,7 @@ def insert_plays(userid, plays):
 
 def insert_item(item):
     cur = con.cursor()
-    cur.execute('INSERT OR IGNORE INTO items (id, name, type, runtime_ticks) VALUES (?, ?, ?, ?)', (item['Id'], item['Name'], item['Type'], item['RunTimeTicks']))
+    cur.execute('INSERT OR IGNORE INTO items (id, name, type, runtime_ticks, show_id) VALUES (?, ?, ?, ?, ?)', (item['Id'], item['Name'], item['Type'], item['RunTimeTicks'], item['SeriesId'] if 'SeriesId' in item else None))
     con.commit()
 
 def insert_points(userid):
@@ -147,6 +147,16 @@ def get_streak(user_id):
             break
     return streak
 
+def get_poster(item_id):
+    cur = con.cursor()
+    item_type = cur.execute('SELECT type FROM items WHERE id = ?', (item_id,)).fetchone()[0]
+    if item_type == 'Movie':
+        return JELLY_DOMAIN + '/Items/' + item_id + '/Images/Primary?fillHeight=706&fillWidth=480&quality=96'
+    elif item_type == 'Episode':
+        show_id = cur.execute('SELECT show_id FROM items WHERE id = ?', (item_id,)).fetchone()[0]
+        return JELLY_DOMAIN + '/Items/' + show_id + '/Images/Primary?fillHeight=706&fillWidth=480&quality=96'
+    return None
+
 def create_json():
     cur = con.cursor()
     users = get_users()
@@ -163,17 +173,20 @@ def create_json():
         monthly_totals = cur.execute('SELECT * FROM monthly_totals WHERE user_id = ?', (user_id,)).fetchall()
         runtime_ticks_response = cur.execute('SELECT SUM(items.runtime_ticks) as total_runtime_ticks FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ?', (user_id,)).fetchone()
         total_watchtime = runtime_ticks_response['total_runtime_ticks'] / TICKS_PER_SECOND / 60
-        last_activity = cur.execute('SELECT items.name as item_name, plays.date_played as date FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? ORDER BY date_played DESC', (user_id,)).fetchone()
+        last_activity = cur.execute('SELECT items.id as item_id, items.name as item_name, plays.date_played as date FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? ORDER BY date_played DESC', (user_id,)).fetchone()
         weekly_stats = get_weekly_stats(user_id)
         streak = get_streak(user_id)
 
         users_dict['users'][user_id] = {
             'name': user['Name'],
-            'last_activity': last_activity['date'],
+            'last_activity': {
+                'date' : last_activity['date'],
+                'name' : last_activity['item_name'],
+                'poster_path' : get_poster(last_activity['item_id'])
+            },
             'total_watchtime': total_watchtime,
             'points' : get_points(user_id),
-            'streak': streak,
-            'last_watched' : last_activity['item_name'],
+            'streak' : streak,
             'daily_stats': {
                 'date' : daily_stats['date'],
                 'watch_minutes' : daily_stats['watch_minutes'],
