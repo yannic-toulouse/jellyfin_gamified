@@ -39,6 +39,19 @@ foreach (getUsersByPoints() as $key => $value) {
                     </tr>
             </table>
         </div>
+        <div class="weekly-leaderboard-container leader-table">
+            <table class="weekly-leaderboard">
+                <tr>
+                    <th colspan="3">Last Watched</th>
+                </tr>
+                <tr>
+                    <td><img src="<?= htmlspecialchars($user['last_activity']['images']['thumb']) ?>" alt=""></td>
+                </tr>
+                <tr>
+                    <td><?= htmlspecialchars($user['last_activity']['name']) ?></td>
+                </tr>
+            </table>
+        </div>
     </div>
 </body>
 </html>
