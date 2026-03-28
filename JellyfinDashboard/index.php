@@ -91,14 +91,14 @@ try {
             <?php foreach (getUsersByActivity() as $user):
                 $last_activity = null;
                 try {
-                    $last_activity = new DateTime($user['last_activity']);
+                    $last_activity = new DateTime($user['last_activity']['date']);
                 } catch (Exception $e) {
 
                 }
                 $last_activity = $last_activity->format('Y-m-d'); ?>
                 <tr>
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
-                    <td><?php echo htmlspecialchars($user['last_watched']); ?></td>
+                    <td><?php echo htmlspecialchars($user['last_activity']['name']); ?></td>
                     <td><span style="white-space:nowrap;"><?php echo htmlspecialchars($last_activity); ?></span></td>
                 </tr>
             <?php endforeach; ?>
