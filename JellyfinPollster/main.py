@@ -147,15 +147,19 @@ def get_streak(user_id):
             break
     return streak
 
-def get_poster(item_id):
+def get_posters(item_id):
     cur = con.cursor()
     item_type = cur.execute('SELECT type FROM items WHERE id = ?', (item_id,)).fetchone()[0]
-    if item_type == 'Movie':
-        return JELLY_DOMAIN + '/Items/' + item_id + '/Images/Primary?fillHeight=706&fillWidth=480&quality=96'
-    elif item_type == 'Episode':
+    if item_type == 'Episode':
         show_id = cur.execute('SELECT show_id FROM items WHERE id = ?', (item_id,)).fetchone()[0]
-        return JELLY_DOMAIN + '/Items/' + show_id + '/Images/Primary?fillHeight=706&fillWidth=480&quality=96'
-    return None
+        item_id = show_id
+    poster = JELLY_DOMAIN + '/Items/' + item_id + '/Images/Primary?fillHeight=706&fillWidth=480&quality=96'
+    thumb = JELLY_DOMAIN + '/Items/' + item_id + '/Images/Thumb?maxWidth=1000&quality=96'
+    images = {
+        'poster' : poster,
+        'thumb' : thumb
+    }
+    return images
 
 def create_json():
     cur = con.cursor()
@@ -182,7 +186,7 @@ def create_json():
             'last_activity': {
                 'date' : last_activity['date'],
                 'name' : last_activity['item_name'],
-                'poster_path' : get_poster(last_activity['item_id'])
+                'images' : get_posters(last_activity['item_id'])
             },
             'total_watchtime': total_watchtime,
             'points' : get_points(user_id),
