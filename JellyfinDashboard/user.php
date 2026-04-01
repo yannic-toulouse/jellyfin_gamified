@@ -12,10 +12,19 @@ foreach (getUsersByPoints() as $key => $value) {
 }
 
 $monthly_points_data = [];
-foreach ($user['monthly_totals'][date('Y')] as $month => $value) {
+if(array_key_exists(date('Y'),$user['monthly_totals'])) {
+    foreach ($user['monthly_totals'][date('Y')] as $month => $value) {
+        $monthly_points_data[] = [
+                'y' => $value['points'],
+                'label' => DateTime::createFromFormat('!m', $month)->format('F')
+        ];
+    }
+}
+else
+{
     $monthly_points_data[] = [
-            'y' => $value['points'],
-            'label' => DateTime::createFromFormat('!m', $month)->format('F')
+            'y' => 0,
+            'label' => DateTime::createFromFormat('!m', date('m'))->format('F')
     ];
 }
 ?>
