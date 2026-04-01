@@ -37,7 +37,7 @@ def get_plays_api(userid):
         'SortOrder' : 'Descending',
         'IncludeItemTypes' : 'Movie,Episode',
         'Recursive' : 'true',
-        'Limit' : 200
+        'Limit' : 500
     }
     response = requests.get(JELLY_DOMAIN + '/Users/' + userid + '/Items', params=params)
     return response.json()
@@ -83,7 +83,7 @@ def insert_points(userid):
     plays = cur.fetchall()
     for play in plays:
         points = round(play['runtime_ticks'] / TICKS_PER_SECOND / 60 * POINTS_PER_MINUTE, 0)
-        cur.execute('INSERT INTO points_ledger (user_id, play_id, reason, points) VALUES (?, ?, ?, ?)', (userid, play['id'], "Watched an Item", points))
+        cur.execute('INSERT INTO points_ledger (user_id, play_id, reason, points, created_at) VALUES (?, ?, ?, ?, ?)', (userid, play['id'], "Watched an Item", points, play['date_played']))
     con.commit()
 
 def update_last_processed(userid, last_processed):
@@ -100,13 +100,25 @@ def get_points(userid):
 def update_monthly_totals():
     cur = con.cursor()
     users = cur.execute('SELECT id FROM users').fetchall()
+    table_is_blank = cur.execute('SELECT COUNT(*) FROM monthly_totals').fetchone()[0] == 0
     for user in users:
-        user_id = user['id']
-        cur.execute('SELECT SUM(points) FROM points_ledger WHERE user_id = ? AND date(created_at) >= date("now", "start of month")', (user_id,))
-        monthly_points = cur.fetchone()[0]
-        if monthly_points is None:
-            monthly_points = 0
-        cur.execute('INSERT INTO monthly_totals (user_id, year, month, points) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, year, month) DO UPDATE SET points = excluded.points', (user_id, datetime.now().year, datetime.now().month, monthly_points))
+        monthly_totals = {}
+        if table_is_blank:
+            first_play_date = cur.execute('SELECT MIN(created_at) FROM points_ledger WHERE user_id = ?', (user['id'],)).fetchone()[0]
+            point_entries = cur.execute('SELECT * FROM points_ledger WHERE (date(created_at) >= date(?)) AND user_id = ?', (first_play_date, user['id'])).fetchall()
+        else:
+            point_entries = cur.execute('SELECT * FROM points_ledger WHERE (date(created_at) >= date("now", "start of month")) AND user_id = ?', (user['id'],)).fetchall()
+        for entry in point_entries:
+            year = entry['created_at'][:4]
+            month = entry['created_at'][5:7]
+            if year not in monthly_totals:
+                monthly_totals[year] = {}
+            monthly_totals[year][month] = {
+                'points' : cur.execute('SELECT SUM(points) FROM points_ledger WHERE (strftime("%Y-%m", created_at) = ?) AND user_id = ?', (year + "-" + month, user['id'])).fetchone()[0] or 0
+            }
+        for year in monthly_totals:
+            for month in monthly_totals[year]:
+                cur.execute('INSERT INTO monthly_totals (user_id, year, month, points) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, year, month) DO UPDATE SET points = excluded.points', (user['id'], year, month, monthly_totals[year][month]['points']))
     con.commit()
 
 def insert_daily_stats(users):
