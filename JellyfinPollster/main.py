@@ -37,7 +37,7 @@ def get_plays_api(userid):
         'SortOrder' : 'Descending',
         'IncludeItemTypes' : 'Movie,Episode',
         'Recursive' : 'true',
-        'Limit' : 200
+        'Limit' : 500
     }
     response = requests.get(JELLY_DOMAIN + '/Users/' + userid + '/Items', params=params)
     return response.json()
@@ -71,7 +71,7 @@ def insert_plays(userid, plays):
 
 def insert_item(item):
     cur = con.cursor()
-    cur.execute('INSERT OR IGNORE INTO items (id, name, type, runtime_ticks) VALUES (?, ?, ?, ?)', (item['Id'], item['Name'], item['Type'], item['RunTimeTicks']))
+    cur.execute('INSERT OR IGNORE INTO items (id, name, type, runtime_ticks, show_id) VALUES (?, ?, ?, ?, ?)', (item['Id'], item['Name'], item['Type'], item['RunTimeTicks'], item['SeriesId'] if 'SeriesId' in item else None))
     con.commit()
 
 def insert_points(userid):
@@ -83,7 +83,7 @@ def insert_points(userid):
     plays = cur.fetchall()
     for play in plays:
         points = round(play['runtime_ticks'] / TICKS_PER_SECOND / 60 * POINTS_PER_MINUTE, 0)
-        cur.execute('INSERT INTO points_ledger (user_id, play_id, reason, points) VALUES (?, ?, ?, ?)', (userid, play['id'], "Watched an Item", points))
+        cur.execute('INSERT INTO points_ledger (user_id, play_id, reason, points, created_at) VALUES (?, ?, ?, ?, ?)', (userid, play['id'], "Watched an Item", points, play['date_played']))
     con.commit()
 
 def update_last_processed(userid, last_processed):
@@ -100,13 +100,25 @@ def get_points(userid):
 def update_monthly_totals():
     cur = con.cursor()
     users = cur.execute('SELECT id FROM users').fetchall()
+    table_is_blank = cur.execute('SELECT COUNT(*) FROM monthly_totals').fetchone()[0] == 0
     for user in users:
-        user_id = user['id']
-        cur.execute('SELECT SUM(points) FROM points_ledger WHERE user_id = ? AND date(created_at) >= date("now", "start of month")', (user_id,))
-        monthly_points = cur.fetchone()[0]
-        if monthly_points is None:
-            monthly_points = 0
-        cur.execute('INSERT INTO monthly_totals (user_id, year, month, points) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, year, month) DO UPDATE SET points = excluded.points', (user_id, datetime.now().year, datetime.now().month, monthly_points))
+        monthly_totals = {}
+        if table_is_blank:
+            first_play_date = cur.execute('SELECT MIN(created_at) FROM points_ledger WHERE user_id = ?', (user['id'],)).fetchone()[0]
+            point_entries = cur.execute('SELECT * FROM points_ledger WHERE (date(created_at) >= date(?)) AND user_id = ?', (first_play_date, user['id'])).fetchall()
+        else:
+            point_entries = cur.execute('SELECT * FROM points_ledger WHERE (date(created_at) >= date("now", "start of month")) AND user_id = ?', (user['id'],)).fetchall()
+        for entry in point_entries:
+            year = entry['created_at'][:4]
+            month = entry['created_at'][5:7]
+            if year not in monthly_totals:
+                monthly_totals[year] = {}
+            monthly_totals[year][month] = {
+                'points' : cur.execute('SELECT SUM(points) FROM points_ledger WHERE (strftime("%Y-%m", created_at) = ?) AND user_id = ?', (year + "-" + month, user['id'])).fetchone()[0] or 0
+            }
+        for year in monthly_totals:
+            for month in monthly_totals[year]:
+                cur.execute('INSERT INTO monthly_totals (user_id, year, month, points) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, year, month) DO UPDATE SET points = excluded.points', (user['id'], year, month, monthly_totals[year][month]['points']))
     con.commit()
 
 def insert_daily_stats(users):
@@ -147,6 +159,20 @@ def get_streak(user_id):
             break
     return streak
 
+def get_posters(item_id):
+    cur = con.cursor()
+    item_type = cur.execute('SELECT type FROM items WHERE id = ?', (item_id,)).fetchone()[0]
+    if item_type == 'Episode':
+        show_id = cur.execute('SELECT show_id FROM items WHERE id = ?', (item_id,)).fetchone()[0]
+        item_id = show_id
+    poster = JELLY_DOMAIN + '/Items/' + item_id + '/Images/Primary?fillHeight=706&fillWidth=480&quality=96'
+    thumb = JELLY_DOMAIN + '/Items/' + item_id + '/Images/Thumb?maxWidth=1000&quality=96'
+    images = {
+        'poster' : poster,
+        'thumb' : thumb
+    }
+    return images
+
 def create_json():
     cur = con.cursor()
     users = get_users()
@@ -163,17 +189,20 @@ def create_json():
         monthly_totals = cur.execute('SELECT * FROM monthly_totals WHERE user_id = ?', (user_id,)).fetchall()
         runtime_ticks_response = cur.execute('SELECT SUM(items.runtime_ticks) as total_runtime_ticks FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ?', (user_id,)).fetchone()
         total_watchtime = runtime_ticks_response['total_runtime_ticks'] / TICKS_PER_SECOND / 60
-        last_activity = cur.execute('SELECT items.name as item_name, plays.date_played as date FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? ORDER BY date_played DESC', (user_id,)).fetchone()
+        last_activity = cur.execute('SELECT items.id as item_id, items.name as item_name, plays.date_played as date FROM plays JOIN items ON plays.item_id = items.id WHERE user_id = ? ORDER BY date_played DESC', (user_id,)).fetchone()
         weekly_stats = get_weekly_stats(user_id)
         streak = get_streak(user_id)
 
         users_dict['users'][user_id] = {
             'name': user['Name'],
-            'last_activity': last_activity['date'],
+            'last_activity': {
+                'date' : last_activity['date'],
+                'name' : last_activity['item_name'],
+                'images' : get_posters(last_activity['item_id'])
+            },
             'total_watchtime': total_watchtime,
             'points' : get_points(user_id),
-            'streak': streak,
-            'last_watched' : last_activity['item_name'],
+            'streak' : streak,
             'daily_stats': {
                 'date' : daily_stats['date'],
                 'watch_minutes' : daily_stats['watch_minutes'],

@@ -1,35 +1,15 @@
 <?php
 require 'utils.php';
-$user_data = file_get_contents('../data/users.json');
-$data = json_decode($user_data, true);
-$users = $data['users'];
 $last_updated = null;
+$users_by_points_weekly = getUsersByPointsWeekly();
 try {
-    $last_updated = new DateTime($data['last_updated']);
+    $last_updated = new DateTime(getData()['last_updated']);
     $last_updated = $last_updated->format('Y-m-d H:i');
 } catch (Exception $e) {
     echo('Error parsing last_updated date: ' . $e->getMessage());
 }
 
-$users_by_points = $users;
-uasort($users_by_points, function ($a, $b) {
-    return $b['points'] <=> $a['points'];
-});
 
-$users_by_points_weekly = $users;
-uasort($users_by_points_weekly, function ($a, $b) {
-    return $b['weekly_stats']['points'] <=> $a['weekly_stats']['points'];
-});
-
-$users_by_playcount = $users;
-uasort($users_by_playcount, function ($a, $b) {
-    return $b['daily_stats']['items_completed'] <=> $a['daily_stats']['items_completed'];
-});
-
-$users_by_activity = $users;
-uasort($users_by_activity, function ($a, $b) {
-    return $b['last_activity'] <=> $a['last_activity'];
-});
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,7 +25,7 @@ uasort($users_by_activity, function ($a, $b) {
     <div class="tables-container">
         <div class="weekly-leaderboard-container leader-table">
             <table class="weekly-leaderboard">
-                <tr>
+                <tr class="header-row">
                     <th colspan="4">Weekly Leaderboard</th>
                 </tr>
                 <tr>
@@ -56,7 +36,7 @@ uasort($users_by_activity, function ($a, $b) {
                 </tr>
                 <?php foreach ($users_by_points_weekly as $id => $user):?>
                 <tr>
-                    <td><a href="/user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
+                    <td><a href="./user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
                     <td><?php echo htmlspecialchars($user['weekly_stats']['points']); ?></td>
                     <td><?php echo htmlspecialchars($user['weekly_stats']['items_completed']); ?></td>
                     <td><?php echo getHourMinuteString($user['weekly_stats']['watch_minutes']); ?></td>
@@ -65,7 +45,7 @@ uasort($users_by_activity, function ($a, $b) {
             </table>
         </div>
         <table class="leader-table">
-            <tr>
+            <tr class="header-row">
                 <th colspan="4">Daily Play Count</th>
             </tr>
             <tr>
@@ -74,9 +54,9 @@ uasort($users_by_activity, function ($a, $b) {
                 <th>Watched Minutes</th>
                 <th>Streak</th>
             </tr>
-            <?php foreach ($users_by_playcount as $id => $user):?>
+            <?php foreach (getUsersByPlaycount() as $user):?>
                 <tr>
-                    <td><a href="/user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
+                    <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['daily_stats']['items_completed']); ?></td>
                     <td><?php echo getHourMinuteString($user['daily_stats']['watch_minutes']); ?></td>
                     <td><?php echo $user['streak'] > 1 || $user['streak'] == 0 ? htmlspecialchars($user['streak']) . ' days' : htmlspecialchars($user['streak']) . ' day'; ?></td>
@@ -84,7 +64,7 @@ uasort($users_by_activity, function ($a, $b) {
             <?php endforeach; ?>
         </table>
         <table class="totals-table leader-table">
-            <tr>
+            <tr class="header-row">
                 <th colspan="3">Totals</th>
             </tr>
             <tr>
@@ -92,16 +72,16 @@ uasort($users_by_activity, function ($a, $b) {
                 <th>Total Points</th>
                 <th>Total Watched Minutes</th>
             </tr>
-            <?php foreach ($users_by_points as $id => $user): ?>
+            <?php foreach (getUsersByPoints() as $user): ?>
                 <tr>
-                    <td><a href="/user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
+                    <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['points']); ?></td>
                     <td><?php echo getHourMinuteString($user['total_watchtime']); ?></td>
                 </tr>
             <?php endforeach; ?>
         </table>
         <table>
-            <tr>
+            <tr class="header-row">
                 <th colspan="3">Latest Activity</th>
             </tr>
             <tr>
@@ -109,17 +89,17 @@ uasort($users_by_activity, function ($a, $b) {
                 <th>Last Activity</th>
                 <th>Last&nbsp;Active On</th>
             </tr>
-            <?php foreach ($users_by_activity as $id => $user):
+            <?php foreach (getUsersByActivity() as $user):
                 $last_activity = null;
                 try {
-                    $last_activity = new DateTime($user['last_activity']);
+                    $last_activity = new DateTime($user['last_activity']['date']);
                 } catch (Exception $e) {
 
                 }
                 $last_activity = $last_activity->format('Y-m-d'); ?>
                 <tr>
-                    <td><a href="/user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
-                    <td><?php echo htmlspecialchars($user['last_watched']); ?></td>
+                    <td><?php echo htmlspecialchars($user['name']); ?></td>
+                    <td><?php echo htmlspecialchars($user['last_activity']['name']); ?></td>
                     <td><span style="white-space:nowrap;"><?php echo htmlspecialchars($last_activity); ?></span></td>
                 </tr>
             <?php endforeach; ?>

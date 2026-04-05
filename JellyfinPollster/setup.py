@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS items (
     id TEXT PRIMARY KEY,           -- Jellyfin item ID
     name TEXT,
     type TEXT,                     -- Movie or Episode
-    genre TEXT,
+    show_id TEXT,
     runtime_ticks INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
