@@ -54,9 +54,9 @@ try {
                 <th>Watched Minutes</th>
                 <th>Streak</th>
             </tr>
-            <?php foreach (getUsersByPlaycount() as $user):?>
+            <?php foreach (getUsersByPlaycount() as $id => $user):?>
                 <tr>
-                    <td><?php echo htmlspecialchars($user['name']); ?></td>
+                    <td><a href="./user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
                     <td><?php echo htmlspecialchars($user['daily_stats']['items_completed']); ?></td>
                     <td><?php echo getHourMinuteString($user['daily_stats']['watch_minutes']); ?></td>
                     <td><?php echo $user['streak'] > 1 || $user['streak'] == 0 ? htmlspecialchars($user['streak']) . ' days' : htmlspecialchars($user['streak']) . ' day'; ?></td>
@@ -72,9 +72,9 @@ try {
                 <th>Total Points</th>
                 <th>Total Watched Minutes</th>
             </tr>
-            <?php foreach (getUsersByPoints() as $user): ?>
+            <?php foreach (getUsersByPoints() as $id => $user): ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($user['name']); ?></td>
+                    <td><a href="./user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
                     <td><?php echo htmlspecialchars($user['points']); ?></td>
                     <td><?php echo getHourMinuteString($user['total_watchtime']); ?></td>
                 </tr>
@@ -89,7 +89,7 @@ try {
                 <th>Last Activity</th>
                 <th>Last&nbsp;Active On</th>
             </tr>
-            <?php foreach (getUsersByActivity() as $user):
+            <?php foreach (getUsersByActivity() as $id => $user):
                 $last_activity = null;
                 try {
                     $last_activity = new DateTime($user['last_activity']['date']);
@@ -98,7 +98,7 @@ try {
                 }
                 $last_activity = $last_activity->format('Y-m-d'); ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($user['name']); ?></td>
+                    <td><a href="./user.php?id=<?=$id?>"><?php echo htmlspecialchars($user['name']); ?></a></td>
                     <td><?php echo htmlspecialchars($user['last_activity']['name']); ?></td>
                     <td><span style="white-space:nowrap;"><?php echo htmlspecialchars($last_activity); ?></span></td>
                 </tr>
