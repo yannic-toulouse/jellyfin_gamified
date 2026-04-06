@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS plays (
     user_id TEXT NOT NULL,
     item_id TEXT NOT NULL,
     date_played TEXT NOT NULL,
-    completion_ratio REAL,
     direct_play INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id),

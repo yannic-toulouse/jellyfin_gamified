@@ -60,9 +60,8 @@ def insert_plays(userid, plays):
             break
 
         is_played = item.get('UserData', {}).get('Played', None)
-        completion_ratio = item['UserData']['PlaybackPositionTicks'] / item['RunTimeTicks']
         if is_played and last_played > last_processed:
-            cur.execute('INSERT OR IGNORE INTO plays (user_id, item_id, date_played, completion_ratio) VALUES (?, ?, ?, ?)', (userid, item['Id'], last_played, completion_ratio))
+            cur.execute('INSERT OR IGNORE INTO plays (user_id, item_id, date_played) VALUES (?, ?, ?)', (userid, item['Id'], last_played))
             insert_item(item)
             if last_played > max_last_played:
                 max_last_played = last_played
@@ -71,7 +70,7 @@ def insert_plays(userid, plays):
 
 def insert_item(item):
     cur = con.cursor()
-    cur.execute('INSERT OR IGNORE INTO items (id, name, type, runtime_ticks, show_id) VALUES (?, ?, ?, ?, ?)', (item['Id'], item['Name'], item['Type'], item['RunTimeTicks'], item['SeriesId'] if 'SeriesId' in item else None))
+    cur.execute('INSERT OR IGNORE INTO items (id, name, type, runtime_ticks, show_id) VALUES (?, ?, ?, ?, ?)', (item['Id'], item['Name'], item['Type'], item['RunTimeTicks'] if 'RunTimeTicks' in item else 0, item['SeriesId'] if 'SeriesId' in item else None))
     con.commit()
 
 def insert_points(userid):
