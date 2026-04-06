@@ -103,8 +103,7 @@ def update_monthly_totals():
     for user in users:
         monthly_totals = {}
         if table_is_blank:
-            first_play_date = cur.execute('SELECT MIN(created_at) FROM points_ledger WHERE user_id = ?', (user['id'],)).fetchone()[0]
-            point_entries = cur.execute('SELECT * FROM points_ledger WHERE (date(created_at) >= date(?)) AND user_id = ?', (first_play_date, user['id'])).fetchall()
+            point_entries = cur.execute('SELECT * FROM points_ledger WHERE user_id = ?', (user['id']),).fetchall()
         else:
             point_entries = cur.execute('SELECT * FROM points_ledger WHERE (date(created_at) >= date("now", "start of month")) AND user_id = ?', (user['id'],)).fetchall()
         for entry in point_entries:
