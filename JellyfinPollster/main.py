@@ -11,6 +11,9 @@ con.row_factory = sqlite3.Row
 load_dotenv()
 API_KEY = os.getenv('API_KEY')
 JELLY_DOMAIN = os.getenv('JELLY_DOMAIN')
+EXCLUDED_USERS = json.loads(os.getenv('EXCLUDED_USERS'))
+DROP_EXCLUDED_USERS = os.getenv('DROP_EXCLUDED_USERS', 'False').lower() == 'true'
+
 TICKS_PER_SECOND = 10000000
 POINTS_PER_MINUTE = 0.5
 
@@ -22,9 +25,16 @@ def get_users_api():
     return response.json()
 
 def insert_user(user):
+    if user['Id'] in EXCLUDED_USERS:
+        if DROP_EXCLUDED_USERS:
+            cur = con.cursor()
+            cur.execute('DELETE FROM users WHERE id = ?', (user['Id'],))
+            con.commit()
+        return False
     cur = con.cursor()
     cur.execute('INSERT OR IGNORE INTO users (id, name) VALUES (?, ?)', (user['Id'], user['Name']))
     con.commit()
+    return True
 
 def get_users():
     cur = con.cursor()
@@ -179,8 +189,6 @@ def create_json():
         'users': {}
     }
     for user in users:
-        if get_points(user['id']) == 0:
-            continue
         user_id = user['id']
         daily_stats = cur.execute('SELECT * FROM daily_stats WHERE user_id = ? AND date(date) >= date("now", "start of day")', (user_id,)).fetchone()
         points_ledger = cur.execute('SELECT COUNT(reason) as items_completed FROM points_ledger WHERE user_id = ?', (user_id,)).fetchone()
@@ -228,11 +236,12 @@ def create_json():
 def main():
     users = get_users_api()
     for user in users:
-        insert_user(user)
-        last_processed = insert_plays(user['Id'], get_plays_api(user['Id']))
-        insert_points(user['Id'])
-        update_last_processed(user['Id'], last_processed)
-        print(user['Name'] + ': ' + str(get_points(user['Id'])) + ' Points')
+        inserted_user = insert_user(user)
+        if inserted_user:
+            last_processed = insert_plays(user['Id'], get_plays_api(user['Id']))
+            insert_points(user['Id'])
+            update_last_processed(user['Id'], last_processed)
+            print(user['Name'] + ': ' + str(get_points(user['Id'])) + ' Points')
     update_monthly_totals()
     insert_daily_stats(users)
     create_json()
